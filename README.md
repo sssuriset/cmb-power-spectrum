@@ -8,7 +8,8 @@ The script loads CMB power spectrum data, plots D_l as a function of multipole m
 ## Results
 
 ### Power Spectrum
-![CMB Power Spectrum](power_spectrum.png)
+
+![CMB Power Spectrum](cmb_power_spectrum_real.png)
 
 ## Key Result
 First major visible peak near l = 220
