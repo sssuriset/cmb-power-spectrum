@@ -1,28 +1,40 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
-# load data
-df = pd.read_csv("cmb_data.csv")
+# load real Planck data
+data = np.loadtxt("COM_PowerSpect_CMB-TT-full_R3.01.txt")
 
-ell = df["ell"].to_numpy()
-Dl = df["Dl"].to_numpy()
+l = data[:, 0]
+Dl = data[:, 1]
+err_low = data[:, 2]
+err_high = data[:, 3]
 
-# find first major peak
+# find peak
 peak_index = np.argmax(Dl)
-peak_ell = ell[peak_index]
-peak_value = Dl[peak_index]
 
-print(f"First major visible peak near l = {peak_ell}")
-print(f"Peak value = {peak_value:.2f}")
+# plot
+plt.figure(figsize=(8,5))
 
-# plot spectrum
-plt.figure()
-plt.plot(ell, Dl, marker="o", label="CMB Power Spectrum")
-plt.scatter([peak_ell], [peak_value], color="red", label=f"Peak near l = {peak_ell}")
+plt.errorbar(
+    l, Dl,
+    yerr=[-err_low, err_high],
+    fmt='o',
+    markersize=3,
+    label="Planck TT Data"
+)
+
+plt.scatter(
+    l[peak_index],
+    Dl[peak_index],
+    color="red",
+    label=f"Peak l ≈ {int(l[peak_index])}"
+)
+
 plt.xlabel("Multipole moment l")
 plt.ylabel("D_l (μK^2)")
-plt.title("CMB Temperature Angular Power Spectrum")
+plt.title("CMB Temperature Angular Power Spectrum (Planck Data)")
+plt.xlim(0, 2000)
 plt.legend()
-plt.savefig("power_spectrum.png", dpi=300)
+
+plt.savefig("cmb_power_spectrum_real.png", dpi=300)
 plt.show()
