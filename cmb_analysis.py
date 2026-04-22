@@ -36,5 +36,5 @@ plt.title("CMB Temperature Angular Power Spectrum (Planck Data)")
 plt.xlim(0, 2000)
 plt.legend()
 
-plt.savefig("cmb_power_spectrum_real.png", dpi=300)
+plt.savefig("power_spectrum.png", dpi=300)
 plt.show()
