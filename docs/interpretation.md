@@ -21,3 +21,11 @@ Peak spacing gives a simple way to describe the repeated acoustic structure of t
 ## Limits of This Project
 
 This project identifies spectrum features but does not perform full cosmological parameter fitting. A complete analysis would require a physical CMB model, likelihood estimation, uncertainty treatment, and comparison with parameters such as baryon density, dark matter density, curvature, and the Hubble constant.
+
+## Uncertainty-Aware Peak Detection
+
+The script preserves reported uncertainty columns when they are available in the CMB spectrum file. The uncertainty band shows the approximate vertical uncertainty around D_ell values.
+
+The peak table includes a peak signal-to-uncertainty estimate. Larger values indicate that a detected peak is large compared with the reported uncertainty at that multipole. This helps separate strong acoustic features from smaller fluctuations.
+
+This is still not a full statistical CMB likelihood analysis. It is a feature-analysis workflow that extracts visible spectrum structure and reports uncertainty-aware diagnostics.

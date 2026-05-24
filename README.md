@@ -90,3 +90,18 @@ Install dependencies:
 Run the analysis:
 
     python3 src/main.py
+
+## Uncertainty-Aware Peak Metrics
+
+The analysis preserves reported spectrum uncertainty columns when they are available in the source data. The main CMB spectrum plot includes an uncertainty band, and the peak table includes uncertainty-aware metrics.
+
+Additional output:
+
+    outputs/cmb_uncertainty_by_ell.png
+
+Additional peak-table columns:
+
+- D_ell_mean_error
+- peak_signal_to_uncertainty
+
+These values help distinguish strong acoustic features from lower-confidence fluctuations in the spectrum. This remains a feature-analysis project, not a cosmological parameter fit.

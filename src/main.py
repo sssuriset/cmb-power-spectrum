@@ -72,11 +72,9 @@ def load_spectrum():
     except Exception:
         data = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
 
-    # If pandas read the whole row as one column, retry as whitespace-separated.
     if len(data.columns) == 1:
         data = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
 
-    # Normalize column names.
     data.columns = [str(col).strip() for col in data.columns]
 
     lower_cols = {str(col).lower(): col for col in data.columns}
@@ -97,18 +95,13 @@ def load_spectrum():
             dl_col = lower_cols[candidate]
             break
 
+    numeric = data.apply(pd.to_numeric, errors="coerce")
+    numeric = numeric.dropna(axis=1, how="all")
+
     if ell_col is not None and dl_col is not None:
         clean = data[[ell_col, dl_col]].copy()
         clean.columns = ["ell", "D_ell"]
-    elif len(data.columns) >= 2:
-        numeric = data.apply(pd.to_numeric, errors="coerce")
-        numeric = numeric.dropna(axis=1, how="all")
-
-        if len(numeric.columns) < 2:
-            raise ValueError(
-                f"Could not identify numeric ell and D_ell columns in {path}."
-            )
-
+    elif len(numeric.columns) >= 2:
         clean = numeric.iloc[:, :2].copy()
         clean.columns = ["ell", "D_ell"]
     else:
@@ -117,7 +110,18 @@ def load_spectrum():
     clean["ell"] = pd.to_numeric(clean["ell"], errors="coerce")
     clean["D_ell"] = pd.to_numeric(clean["D_ell"], errors="coerce")
 
-    clean = clean.dropna()
+    # Preserve uncertainty columns when the source file has them.
+    # For Planck TT files, extra numeric columns often include lower and upper error values.
+    if len(numeric.columns) >= 4:
+        clean["D_ell_lower_error"] = pd.to_numeric(numeric.iloc[:, 2], errors="coerce").abs()
+        clean["D_ell_upper_error"] = pd.to_numeric(numeric.iloc[:, 3], errors="coerce").abs()
+        clean["D_ell_mean_error"] = (clean["D_ell_lower_error"] + clean["D_ell_upper_error"]) / 2
+    else:
+        clean["D_ell_lower_error"] = np.nan
+        clean["D_ell_upper_error"] = np.nan
+        clean["D_ell_mean_error"] = np.nan
+
+    clean = clean.dropna(subset=["ell", "D_ell"])
     clean = clean.sort_values("ell")
     clean = clean[(clean["ell"] > 0) & (clean["D_ell"] > 0)]
 
@@ -164,6 +168,13 @@ def detect_peaks(data):
         "angular_scale_degrees": acoustic_scale_degrees(ell[peaks])
     })
 
+    if "D_ell_mean_error" in data.columns:
+        peak_table["D_ell_mean_error"] = data["D_ell_mean_error"].to_numpy()[peaks]
+        peak_table["peak_signal_to_uncertainty"] = peak_table["D_ell"] / peak_table["D_ell_mean_error"]
+    else:
+        peak_table["D_ell_mean_error"] = np.nan
+        peak_table["peak_signal_to_uncertainty"] = np.nan
+
     peak_table = peak_table.sort_values("smoothed_D_ell", ascending=False)
     peak_table = peak_table.head(3)
     peak_table = peak_table.sort_values("ell").reset_index(drop=True)
@@ -175,7 +186,27 @@ def detect_peaks(data):
 
 def save_linear_plot(data, peak_table):
     plt.figure(figsize=(10, 5))
+
     plt.plot(data["ell"], data["D_ell"], linewidth=1, label="CMB power spectrum")
+
+    has_uncertainty = (
+        "D_ell_lower_error" in data.columns
+        and "D_ell_upper_error" in data.columns
+        and data["D_ell_lower_error"].notna().any()
+        and data["D_ell_upper_error"].notna().any()
+    )
+
+    if has_uncertainty:
+        lower = data["D_ell"] - data["D_ell_lower_error"]
+        upper = data["D_ell"] + data["D_ell_upper_error"]
+        plt.fill_between(
+            data["ell"],
+            lower,
+            upper,
+            alpha=0.25,
+            label="Reported uncertainty band"
+        )
+
     plt.scatter(peak_table["ell"], peak_table["D_ell"], s=45, label="Detected acoustic peaks")
 
     for _, row in peak_table.iterrows():
@@ -224,6 +255,27 @@ def save_smoothed_plot(data, smoothed, peak_table):
     plt.close()
 
 
+def save_uncertainty_plot(data, peak_table):
+    if "D_ell_mean_error" not in data.columns or not data["D_ell_mean_error"].notna().any():
+        return
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(data["ell"], data["D_ell_mean_error"], linewidth=1, label="Mean D_ell uncertainty")
+    plt.scatter(
+        peak_table["ell"],
+        peak_table["D_ell_mean_error"],
+        s=45,
+        label="Peak uncertainty values"
+    )
+    plt.xlabel("Multipole moment ell")
+    plt.ylabel("Mean D_ell uncertainty")
+    plt.title("CMB Spectrum Uncertainty by Multipole")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("outputs/cmb_uncertainty_by_ell.png", dpi=300)
+    plt.close()
+
+
 def main():
     os.makedirs("outputs", exist_ok=True)
 
@@ -259,6 +311,7 @@ def main():
     save_linear_plot(data, peak_table)
     save_log_plot(data, peak_table)
     save_smoothed_plot(data, smoothed, peak_table)
+    save_uncertainty_plot(data, peak_table)
 
     print("Loaded data from:", source_path)
     print("\nDetected acoustic peaks:")
