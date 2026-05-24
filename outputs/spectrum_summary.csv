@@ -1,0 +1,6 @@
+metric,value
+source_file,COM_PowerSpect_CMB-TT-full_R3.01.txt
+number_of_detected_peaks,3
+first_peak_ell,224.0
+first_peak_angular_scale_degrees,0.8035714285714286
+mean_peak_spacing_ell,299.0
