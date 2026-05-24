@@ -1,89 +1,29 @@
 # CMB Power Spectrum Feature Analysis
 
-This project analyzes the cosmic microwave background temperature power spectrum. It identifies acoustic peaks, estimates peak spacing, computes angular scales from multipole locations, and saves the detected spectral features to output tables.
+This project analyzes the cosmic microwave background temperature TT power spectrum using Python. It reads a spectrum file, plots D_ell against multipole moment ell, marks the strongest acoustic peaks, and saves the measured peak locations to CSV.
 
-## Project Goal
+The main goal is feature extraction, not cosmological parameter fitting. The script focuses on where the first few acoustic peaks appear and how those locations relate to angular scale through the approximation theta ≈ 180 / ell.
 
-The goal is to move beyond basic visualization and extract measurable features from the CMB power spectrum. The analysis focuses on the locations of the first acoustic peaks and their connection to angular structure in the early universe.
+## What the script does
 
-## Methods
+- Loads a CMB TT power spectrum file
+- Smooths the spectrum with a Savitzky-Golay filter
+- Detects the first three acoustic peaks using spacing and prominence thresholds
+- Estimates angular scale from each peak location
+- Saves peak measurements and a summary table
+- Plots the spectrum, smoothed spectrum, log-scaled spectrum, and reported uncertainty when uncertainty columns are present
 
-The analysis includes:
+## Data
 
-- loading CMB power spectrum data
-- plotting D_ell against multipole moment ell
-- smoothing the spectrum with a Savitzky-Golay filter
-- identifying acoustic peaks using prominence and spacing thresholds
-- detecting the first three major acoustic peaks
-- estimating peak spacing in ell
-- converting peak location to angular scale using theta approx 180 / ell
-- saving peak and summary tables to CSV
+The analysis is set up for the Planck TT power spectrum text file:
 
-## Repository Structure
+    data/planck_tt_power_spectrum.txt
 
-    cmb-power-spectrum/
-    ├── src/
-    │   └── main.py
-    ├── data/
-    │   └── sample_cmb_power_spectrum.csv
-    ├── outputs/
-    │   ├── cmb_power_spectrum_peaks.png
-    │   ├── cmb_power_spectrum_log.png
-    │   ├── cmb_smoothed_peak_detection.png
-    │   ├── peak_table.csv
-    │   └── spectrum_summary.csv
-    ├── docs/
-    │   └── interpretation.md
-    └── README.md
-
-## Example Outputs
-
-The main spectrum plot marks the detected acoustic peaks.
-
-![CMB Peak Detection](outputs/cmb_power_spectrum_peaks.png)
-
-The log-scale version makes the broad structure of the spectrum easier to inspect across ell.
-
-![CMB Log Spectrum](outputs/cmb_power_spectrum_log.png)
-
-The smoothed plot shows the spectrum used for peak detection.
-
-![Smoothed Peak Detection](outputs/cmb_smoothed_peak_detection.png)
-
-## Output Tables
-
-The script saves:
-
-    outputs/peak_table.csv
-    outputs/spectrum_summary.csv
-
-The peak table includes:
-
-- peak number
-- multipole location ell
-- D_ell value
-- smoothed D_ell value
-- peak prominence
-- angular scale in degrees
-- spacing from the previous detected peak
-
-## Scientific Context
-
-The first acoustic peak near ell around 220 corresponds to structure on roughly one-degree angular scales. Higher acoustic peaks reflect smaller angular scales and encode information about early-universe plasma oscillations. This project does not fit cosmological parameters, but it extracts observable spectrum features that are used in CMB interpretation.
-
-## Skills Demonstrated
-
-- Python scientific computing
-- CMB spectrum analysis
-- peak detection
-- signal smoothing
-- feature extraction
-- CSV-based result reporting
-- scientific visualization
+If the file is not present, the script stops instead of generating fake data. This keeps the outputs tied to the input spectrum used in the project.
 
 ## Run
 
-Install dependencies:
+Install the dependencies:
 
     python3 -m pip install numpy pandas matplotlib scipy
 
@@ -91,17 +31,30 @@ Run the analysis:
 
     python3 src/main.py
 
-## Uncertainty-Aware Peak Metrics
+The script writes its figures and CSV files into `outputs/`.
 
-The analysis preserves reported spectrum uncertainty columns when they are available in the source data. The main CMB spectrum plot includes an uncertainty band, and the peak table includes uncertainty-aware metrics.
+## Outputs
 
-Additional output:
+Main figures:
 
-    outputs/cmb_uncertainty_by_ell.png
+- `outputs/cmb_power_spectrum_peaks.png`
+- `outputs/cmb_power_spectrum_log.png`
+- `outputs/cmb_smoothed_peak_detection.png`
+- `outputs/cmb_uncertainty_by_ell.png`
 
-Additional peak-table columns:
+Tables:
 
-- D_ell_mean_error
-- peak_signal_to_uncertainty
+- `outputs/peak_table.csv`
+- `outputs/spectrum_summary.csv`
 
-These values help distinguish strong acoustic features from lower-confidence fluctuations in the spectrum. This remains a feature-analysis project, not a cosmological parameter fit.
+The peak table includes the detected peak number, ell location, D_ell value, smoothed D_ell value, peak prominence, angular scale, and spacing from the previous detected peak. If reported uncertainty columns are present in the source file, the table also includes the mean D_ell error and the peak signal-to-uncertainty ratio.
+
+## Scientific context
+
+The first acoustic peak in the CMB temperature spectrum appears near ell ≈ 220, which corresponds to an angular scale near one degree. This scale is important because it reflects the apparent size of sound-horizon structure at recombination.
+
+The second and third peaks appear at higher ell values. Their locations show smaller angular features in the early-universe plasma. This project only extracts peak positions and simple derived values. It does not fit a cosmological model.
+
+## Notes
+
+Peak detection depends on smoothing, prominence, and spacing choices. Those settings are useful for identifying the dominant acoustic peaks, but they are not a replacement for a full CMB likelihood analysis.
