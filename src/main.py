@@ -1,31 +1,10 @@
 import os
+import sys
 import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks, savgol_filter
-
-def make_sample_data(path):
-    ell = np.arange(2, 2501)
-
-    peak1 = 5600 * np.exp(-0.5 * ((ell - 220) / 65) ** 2)
-    peak2 = 2600 * np.exp(-0.5 * ((ell - 540) / 85) ** 2)
-    peak3 = 2300 * np.exp(-0.5 * ((ell - 800) / 95) ** 2)
-    damping = np.exp(-ell / 2400)
-
-    baseline = 400 + 900 * np.exp(-ell / 900)
-    noise = np.random.default_rng(4).normal(0, 110, size=len(ell))
-
-    dl = (baseline + peak1 + peak2 + peak3) * damping + noise
-    dl = np.clip(dl, 0, None)
-
-    data = pd.DataFrame({
-        "ell": ell,
-        "D_ell": dl
-    })
-
-    data.to_csv(path, index=False)
-
 
 def find_data_file():
     patterns = [
@@ -57,11 +36,11 @@ def find_data_file():
     if files:
         return files[0]
 
-    os.makedirs("data", exist_ok=True)
-    sample_path = "data/sample_cmb_power_spectrum.csv"
-    make_sample_data(sample_path)
-
-    return sample_path
+    sys.exit(
+        "ERROR: no CMB spectrum file found.\n"
+        "Searched data/*.txt, data/*.csv, *.txt, *.csv.\n"
+        "Place a spectrum file such as data/planck_tt_power_spectrum.txt and rerun."
+    )
 
 
 def load_spectrum():
@@ -70,10 +49,10 @@ def load_spectrum():
     try:
         data = pd.read_csv(path, comment="#")
     except Exception:
-        data = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
+        data = pd.read_csv(path, sep=r"\s+", comment="#", header=None)
 
     if len(data.columns) == 1:
-        data = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
+        data = pd.read_csv(path, sep=r"\s+", comment="#", header=None)
 
     data.columns = [str(col).strip() for col in data.columns]
 

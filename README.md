@@ -1,60 +1,28 @@
-# CMB Power Spectrum Feature Analysis
+# CMB Acoustic Peak Extraction
 
-This project analyzes the cosmic microwave background temperature TT power spectrum using Python. It reads a spectrum file, plots D_ell against multipole moment ell, marks the strongest acoustic peaks, and saves the measured peak locations to CSV.
+Feature extraction on the Planck cosmic microwave background TT power spectrum. The script reads a spectrum file, smooths it with a Savitzky-Golay filter, locates the first three acoustic peaks by prominence and spacing, converts each peak location to an angular scale via theta = 180 / ell, and writes the measurements to CSV with figures.
 
-The main goal is feature extraction, not cosmological parameter fitting. The script focuses on where the first few acoustic peaks appear and how those locations relate to angular scale through the approximation theta ≈ 180 / ell.
+![Detected acoustic peaks](outputs/cmb_power_spectrum_peaks.png)
 
-## What the script does
-
-- Loads a CMB TT power spectrum file
-- Smooths the spectrum with a Savitzky-Golay filter
-- Detects the first three acoustic peaks using spacing and prominence thresholds
-- Estimates angular scale from each peak location
-- Saves peak measurements and a summary table
-- Plots the spectrum, smoothed spectrum, log-scaled spectrum, and reported uncertainty when uncertainty columns are present
-
-## Data
-
-The analysis is set up for the Planck TT power spectrum text file:
-
-    data/planck_tt_power_spectrum.txt
-
-If the file is not present, the script stops instead of generating fake data. This keeps the outputs tied to the input spectrum used in the project.
+Measured on the included Planck TT spectrum: peaks at ell = 224, 514, and 822, first peak angular scale 0.80 degrees, mean peak spacing 299 in ell. The scope is peak measurement and derived scales, not cosmological parameter fitting.
 
 ## Run
 
-Install the dependencies:
+```bash
+python3 -m pip install numpy pandas matplotlib scipy
+python3 src/main.py
+```
 
-    python3 -m pip install numpy pandas matplotlib scipy
-
-Run the analysis:
-
-    python3 src/main.py
-
-The script writes its figures and CSV files into `outputs/`.
+The script looks for a spectrum file in `data/*.txt`, `data/*.csv`, then the repo root, and exits with an error if none is found. It ships with `data/planck_tt_power_spectrum.txt` (Planck TT, columns ell, D_ell, lower error, upper error). Any whitespace or comma delimited file with ell and D_ell columns works; reported uncertainty columns are picked up when present.
 
 ## Outputs
 
-Main figures:
+Written to `outputs/`:
 
-- `outputs/cmb_power_spectrum_peaks.png`
-- `outputs/cmb_power_spectrum_log.png`
-- `outputs/cmb_smoothed_peak_detection.png`
-- `outputs/cmb_uncertainty_by_ell.png`
+- `peak_table.csv`: peak number, ell, D_ell, smoothed D_ell, prominence, angular scale, spacing from previous peak, and signal-to-uncertainty ratio when the source file reports errors
+- `spectrum_summary.csv`: source file, peak count, first peak location and angular scale, mean peak spacing
+- Figures: linear spectrum with labeled peaks, log-log spectrum, smoothed spectrum with detections, uncertainty by multipole
 
-Tables:
+## Method notes
 
-- `outputs/peak_table.csv`
-- `outputs/spectrum_summary.csv`
-
-The peak table includes the detected peak number, ell location, D_ell value, smoothed D_ell value, peak prominence, angular scale, and spacing from the previous detected peak. If reported uncertainty columns are present in the source file, the table also includes the mean D_ell error and the peak signal-to-uncertainty ratio.
-
-## Scientific context
-
-The first acoustic peak in the CMB temperature spectrum appears near ell ≈ 220, which corresponds to an angular scale near one degree. This scale is important because it reflects the apparent size of sound-horizon structure at recombination.
-
-The second and third peaks appear at higher ell values. Their locations show smaller angular features in the early-universe plasma. This project only extracts peak positions and simple derived values. It does not fit a cosmological model.
-
-## Notes
-
-Peak detection depends on smoothing, prominence, and spacing choices. Those settings are useful for identifying the dominant acoustic peaks, but they are not a replacement for a full CMB likelihood analysis.
+Peak detection runs on the smoothed spectrum with a prominence threshold of 0.20 standard deviations and a minimum separation of 120 in ell, then keeps the three strongest detections ordered by ell. The first peak near one degree traces the sound horizon at recombination; the spacing of the following peaks reflects the harmonic structure of the same acoustic oscillations. Smoothing window and threshold choices shift detected locations by a few multipoles, which sets the effective precision of the measurement.
